@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Usuario\\\\Documents\\\\Proyectos\\\\Portafolio\\\\CuentaCobro\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --name \"cuenta-cobro\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(taskkill /PID 17628 /F)",
+      "PowerShell(Stop-Process -Id 17628 -Force)"
+    ]
+  }
+}
