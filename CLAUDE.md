@@ -28,8 +28,9 @@ src/
   components/
     FormularioCuentaCobro.tsx  # formulario controlado, grid de secciones
     CuentaCobroPDF.tsx         # plantilla PDF con @react-pdf/renderer (StyleSheet + componentes de react-pdf)
+    PDFSection.tsx             # Client Component: botón de descarga + toggle de PDFViewer inline
   types/
-    cuenta-cobro.ts   # interface CuentaCobro + valor inicial vacío
+    cuenta-cobro.ts   # interface CuentaCobro, cuentaCobroVacia, calcularTotales()
 ```
 
 ### Flujo principal
@@ -37,11 +38,11 @@ src/
 1. `page.tsx` mantiene el estado `CuentaCobro` y lo pasa al formulario y al PDF.
 2. `FormularioCuentaCobro` emite cambios via `onChange`.
 3. `CuentaCobroPDF` recibe `data` y renderiza el `<Document>` de react-pdf.
-4. `PDFDownloadLink` envuelve un botón para descargar. `PDFViewer` (cargado con `dynamic(..., { ssr: false })`) ofrece vista previa opcional.
+4. `PDFSection` (Client Component) contiene `PDFDownloadLink` para descarga y toggle de `PDFViewer` para vista previa inline — ambos sin `dynamic` porque `PDFSection` ya es `"use client"` y se importa en `page.tsx` con `dynamic(..., { ssr: false })`.
 
 ### Notas importantes
 
 - `@react-pdf/renderer` no funciona en SSR — usar `dynamic` con `{ ssr: false }` para `PDFViewer`.
-- `PDFDownloadLink` sí puede estar en el render normal porque react-pdf maneja su propio worker.
+- `calcularTotales(data)` en `types/cuenta-cobro.ts` centraliza la lógica financiera (abonos, retención, saldo pendiente) — usarla en lugar de recalcular en componentes.
 - El PDF se genera completamente en el cliente; no hay backend ni base de datos.
 - `formatCOP` usa `Intl.NumberFormat` con locale `es-CO` para formato de moneda colombiana.
