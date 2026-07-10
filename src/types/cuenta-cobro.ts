@@ -3,6 +3,11 @@ export interface Abono {
   monto: number;
 }
 
+export interface Concepto {
+  descripcion: string;
+  monto: number;
+}
+
 export interface CuentaCobro {
   numero: string;
   ciudad: string;
@@ -24,20 +29,21 @@ export interface CuentaCobro {
   concepto: string;
   valorContrato: number;
   abonos: Abono[];
-  valor: number;
+  conceptos: Concepto[];
   retencionPorcentaje: number;
   periodo: string;
 }
 
 export function calcularTotales(data: CuentaCobro) {
+  const valorCuenta = data.conceptos.reduce((sum, c) => sum + (c.monto || 0), 0);
   const totalAbonado = data.abonos.reduce((sum, a) => sum + (a.monto || 0), 0);
-  const baseRetencion = data.valorContrato > 0 ? data.valorContrato : data.valor;
+  const baseRetencion = data.valorContrato > 0 ? data.valorContrato : valorCuenta;
   const valorRetencion = Math.round(baseRetencion * (data.retencionPorcentaje / 100));
-  const valorNeto = data.valor - valorRetencion;
+  const valorNeto = valorCuenta - valorRetencion;
   const saldoPendiente = data.valorContrato > 0
     ? data.valorContrato - totalAbonado - valorRetencion
-    : data.valor - valorRetencion;
-  return { totalAbonado, saldoPendiente, valorRetencion, valorNeto };
+    : valorCuenta - valorRetencion;
+  return { valorCuenta, totalAbonado, saldoPendiente, valorRetencion, valorNeto };
 }
 
 export const cuentaCobroVacia: CuentaCobro = {
@@ -61,7 +67,7 @@ export const cuentaCobroVacia: CuentaCobro = {
   concepto: "",
   valorContrato: 0,
   abonos: [],
-  valor: 0,
+  conceptos: [{ descripcion: "", monto: 0 }],
   retencionPorcentaje: 0,
   periodo: "",
 };

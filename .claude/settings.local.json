@@ -10,7 +10,8 @@
       "Bash(npm run *)",
       "Bash(taskkill /PID 17628 /F)",
       "PowerShell(Stop-Process -Id 17628 -Force)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

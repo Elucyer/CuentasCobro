@@ -1,6 +1,6 @@
 "use client";
 
-import type { Abono, CuentaCobro } from "@/types/cuenta-cobro";
+import type { Abono, Concepto, CuentaCobro } from "@/types/cuenta-cobro";
 import { calcularTotales } from "@/types/cuenta-cobro";
 
 interface Props {
@@ -102,11 +102,28 @@ function CampoMoneda({
 
 export default function FormularioCuentaCobro({ data, onChange }: Props) {
   const handle = (name: keyof CuentaCobro, value: string) => {
-    const numericos: (keyof CuentaCobro)[] = ["valor", "valorContrato"];
+    const numericos: (keyof CuentaCobro)[] = ["valorContrato"];
     onChange({
       ...data,
       [name]: numericos.includes(name) ? parseFloat(value) || 0 : value,
     });
+  };
+
+  const addConcepto = () => {
+    onChange({ ...data, conceptos: [...data.conceptos, { descripcion: "", monto: 0 }] });
+  };
+
+  const updateConcepto = (i: number, field: keyof Concepto, value: string) => {
+    const conceptos = data.conceptos.map((c, idx) =>
+      idx === i
+        ? { ...c, [field]: field === "monto" ? parseFloat(value) || 0 : value }
+        : c
+    );
+    onChange({ ...data, conceptos });
+  };
+
+  const removeConcepto = (i: number) => {
+    onChange({ ...data, conceptos: data.conceptos.filter((_, idx) => idx !== i) });
   };
 
   const addAbono = () => {
@@ -126,7 +143,7 @@ export default function FormularioCuentaCobro({ data, onChange }: Props) {
     onChange({ ...data, abonos: data.abonos.filter((_, idx) => idx !== i) });
   };
 
-  const { totalAbonado, saldoPendiente } = calcularTotales(data);
+  const { valorCuenta, totalAbonado, saldoPendiente } = calcularTotales(data);
   const tieneContrato = data.valorContrato > 0;
   const tieneAbonos = data.abonos.length > 0;
 
@@ -194,13 +211,65 @@ export default function FormularioCuentaCobro({ data, onChange }: Props) {
             placeholder="10.000.000"
           />
 
-          <CampoMoneda
-            label="Valor de esta cuenta de cobro"
-            value={data.valor}
-            onChange={(v) => onChange({ ...data, valor: v })}
-            placeholder="3.000.000"
-            required
-          />
+          {/* Conceptos de pago */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-600">
+                Conceptos de esta cuenta de cobro <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={addConcepto}
+                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                + Agregar concepto
+              </button>
+            </div>
+            <div className="space-y-3 mt-2">
+              {data.conceptos.map((concepto, i) => (
+                <div key={i} className="flex gap-3 items-start">
+                  <div className="flex-1">
+                    <input
+                      className={inputBase}
+                      type="text"
+                      placeholder={i === 0 ? "Ej: Prestación de servicios del mes" : "Ej: Ajustes adicionales de features"}
+                      value={concepto.descripcion}
+                      onChange={(e) => updateConcepto(i, "descripcion", e.target.value)}
+                    />
+                  </div>
+                  <div className="w-40 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+                    <input
+                      className="w-full border border-gray-300 rounded-md pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      type="number"
+                      min="0"
+                      placeholder="350.000"
+                      value={concepto.monto || ""}
+                      onChange={(e) => updateConcepto(i, "monto", e.target.value)}
+                    />
+                  </div>
+                  {data.conceptos.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeConcepto(i)}
+                      className="mt-2 text-gray-300 hover:text-red-400 transition-colors"
+                      title="Eliminar"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+              {data.conceptos.length > 1 && (
+                <div className="flex justify-between text-sm font-semibold text-gray-700 border-t border-gray-100 pt-2">
+                  <span>Valor total de esta cuenta</span>
+                  <span>${valorCuenta.toLocaleString("es-CO")}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Retención */}
           <div>
@@ -224,7 +293,7 @@ export default function FormularioCuentaCobro({ data, onChange }: Props) {
               {data.retencionPorcentaje > 0 && (
                 <div className="text-sm text-gray-500 flex gap-4 flex-wrap">
                   {(() => {
-                    const base = data.valorContrato > 0 ? data.valorContrato : data.valor;
+                    const base = data.valorContrato > 0 ? data.valorContrato : valorCuenta;
                     const retencion = Math.round(base * data.retencionPorcentaje / 100);
                     return (
                       <>
@@ -237,7 +306,7 @@ export default function FormularioCuentaCobro({ data, onChange }: Props) {
                         <span>
                           Neto a recibir:{" "}
                           <span className="font-semibold text-green-600">
-                            ${(data.valor - retencion).toLocaleString("es-CO")}
+                            ${(valorCuenta - retencion).toLocaleString("es-CO")}
                           </span>
                         </span>
                       </>
@@ -323,7 +392,7 @@ export default function FormularioCuentaCobro({ data, onChange }: Props) {
             )}
             <div className="flex justify-between text-gray-500">
               <span>Esta cuenta de cobro</span>
-              <span className="text-blue-600">− ${data.valor.toLocaleString("es-CO")}</span>
+              <span className="text-blue-600">− ${valorCuenta.toLocaleString("es-CO")}</span>
             </div>
             <div className={`flex justify-between font-bold pt-2 border-t border-gray-100 ${saldoPendiente < 0 ? "text-red-600" : "text-gray-800"}`}>
               <span>Saldo pendiente</span>

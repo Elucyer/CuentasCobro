@@ -150,7 +150,7 @@ function formatFecha(fecha: string): string {
 }
 
 export default function CuentaCobroPDF({ data }: { data: CuentaCobro }) {
-  const { totalAbonado, saldoPendiente, valorRetencion, valorNeto } = calcularTotales(data);
+  const { valorCuenta, totalAbonado, saldoPendiente, valorRetencion } = calcularTotales(data);
   const tieneContrato = data.valorContrato > 0;
   const tieneAbonos = data.abonos.length > 0;
   const tieneRetencion = data.retencionPorcentaje > 0;
@@ -198,6 +198,22 @@ export default function CuentaCobroPDF({ data }: { data: CuentaCobro }) {
         <View style={styles.seccion}>
           <Text style={styles.seccionTitulo}>Concepto</Text>
           <Text style={{ lineHeight: 1.5 }}>{data.concepto}</Text>
+          <View style={styles.tablaAbonos}>
+            {data.conceptos.map((concepto, i) => (
+              <View key={i} style={styles.filaAbono}>
+                <Text style={{ flex: 1, paddingRight: 12, lineHeight: 1.4 }}>
+                  {concepto.descripcion || `Concepto ${i + 1}`}
+                </Text>
+                <Text style={{ width: 80, textAlign: "right" }}>{formatCOP(concepto.monto)}</Text>
+              </View>
+            ))}
+            {data.conceptos.length > 1 && (
+              <View style={styles.filaTotal}>
+                <Text style={{ fontFamily: "Helvetica-Bold" }}>Valor total de esta cuenta</Text>
+                <Text style={{ fontFamily: "Helvetica-Bold" }}>{formatCOP(valorCuenta)}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Desglose financiero si hay contrato, abonos o retención */}
@@ -213,20 +229,26 @@ export default function CuentaCobroPDF({ data }: { data: CuentaCobro }) {
               )}
               {tieneAbonos && data.abonos.map((abono, i) => (
                 <View key={i} style={styles.filaAbono}>
-                  <Text style={{ color: "#555555" }}>{abono.descripcion || `Abono ${i + 1}`}</Text>
-                  <Text style={{ color: "#555555" }}>− {formatCOP(abono.monto)}</Text>
+                  <Text style={{ flex: 1, paddingRight: 12, lineHeight: 1.4, color: "#555555" }}>
+                    {abono.descripcion || `Abono ${i + 1}`}
+                  </Text>
+                  <Text style={{ width: 90, textAlign: "right", color: "#555555" }}>
+                    − {formatCOP(abono.monto)}
+                  </Text>
                 </View>
               ))}
               <View style={styles.filaAbono}>
                 <Text style={{ color: "#555555" }}>Esta cuenta de cobro</Text>
-                <Text style={{ color: "#555555" }}>− {formatCOP(data.valor)}</Text>
+                <Text style={{ color: "#555555" }}>− {formatCOP(valorCuenta)}</Text>
               </View>
               {tieneRetencion && (
                 <View style={styles.filaAbono}>
-                  <Text style={{ color: "#555555" }}>
+                  <Text style={{ flex: 1, paddingRight: 12, color: "#555555" }}>
                     Retención en la fuente ({data.retencionPorcentaje}% sobre {tieneContrato ? "contrato" : "valor"})
                   </Text>
-                  <Text style={{ color: "#555555" }}>− {formatCOP(valorRetencion)}</Text>
+                  <Text style={{ width: 90, textAlign: "right", color: "#555555" }}>
+                    − {formatCOP(valorRetencion)}
+                  </Text>
                 </View>
               )}
               <View style={styles.filaSaldo}>

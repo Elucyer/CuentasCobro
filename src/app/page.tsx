@@ -24,7 +24,7 @@ function formatCOP(valor: number): string {
 
 export default function Home() {
   const [data, setData] = useState<CuentaCobro>(cuentaCobroVacia);
-  const { totalAbonado, saldoPendiente, valorRetencion, valorNeto } = calcularTotales(data);
+  const { valorCuenta, totalAbonado, saldoPendiente, valorRetencion, valorNeto } = calcularTotales(data);
   const tieneAbonos = data.abonos.length > 0;
   const tieneContrato = data.valorContrato > 0;
   const tieneRetencion = data.retencionPorcentaje > 0;
@@ -82,7 +82,7 @@ export default function Home() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-500">Esta cuenta</span>
-                  <span className="font-medium">{formatCOP(data.valor)}</span>
+                  <span className="font-medium">{formatCOP(valorCuenta)}</span>
                 </div>
                 {tieneRetencion && (
                   <div className="flex justify-between">
@@ -93,7 +93,7 @@ export default function Home() {
                 <div className="border-t pt-2 mt-2 flex justify-between items-center">
                   <span className="font-bold text-gray-700">Neto a recibir</span>
                   <span className="font-bold text-lg text-green-600">
-                    {formatCOP(tieneRetencion ? valorNeto : data.valor)}
+                    {formatCOP(tieneRetencion ? valorNeto : valorCuenta)}
                   </span>
                 </div>
                 {tieneContrato && (
